@@ -95,11 +95,9 @@ class OrderBookImpl(
       val existingOrder = iterator.next()
 
       if (existingOrder.quantity <= remainingQuantity) {
-        // Partial match
         remainingQuantity = remainingQuantity.subtract(existingOrder.quantity)
         iterator.remove()
       } else {
-        // Full match
         val updatedQuantity = existingOrder.quantity.subtract(remainingQuantity)
         limitOrders[limitOrders.indexOf(existingOrder)] = existingOrder.copy(quantity = updatedQuantity)
         return BigDecimal.ZERO

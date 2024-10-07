@@ -239,5 +239,27 @@ class OrderBookUnitTest {
     assertEquals(BigDecimal("1"), orderBook.sellOrders[BigDecimal("100")]?.first()?.quantity)
   }
 
+  @Test
+  fun `Ensure price-time priority`() {
+    // Given
+    val buy1 = LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("100"), "BTCUSD")
+    val buy2 = LimitOrder(OrderSide.BUY, BigDecimal("3"), BigDecimal("100"), "BTCUSD")
+    val sell1 = LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("100"), "BTCUSD")
 
+    // When
+    val res1 = orderBook.submitLimitOrder(buy1)
+    val res2 = orderBook.submitLimitOrder(buy2)
+    val res3 = orderBook.submitLimitOrder(sell1)
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertTrue(res3)
+    // Buy1 should be filled first, so we expect buy2 to still exist in the order book
+    assertEquals(orderBook.buyOrders[BigDecimal("100")]?.first()?.orderId, buy2.orderId)
+    assertEquals(1, orderBook.buyOrders.size)
+    assertEquals(1, orderBook.buyOrders[BigDecimal("100")]?.size)
+    assertEquals(BigDecimal("1"), orderBook.buyOrders[BigDecimal("100")]?.first()?.quantity)
+    assertTrue(orderBook.sellOrders.isEmpty())
+  }
 }
