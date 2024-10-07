@@ -79,9 +79,16 @@ class OrderBookImpl(
     while (iterator.hasNext() && remainingQuantity > BigDecimal.ZERO) {
       val existingOrder = iterator.next()
 
-      val updatedQuantity = existingOrder.quantity.subtract(remainingQuantity)
-      limitOrders[limitOrders.indexOf(existingOrder)] = existingOrder.copy(quantity = updatedQuantity)
-      return BigDecimal.ZERO
+      if (existingOrder.quantity <= remainingQuantity) {
+        // Partial match
+        remainingQuantity = remainingQuantity.subtract(existingOrder.quantity)
+        iterator.remove()
+      } else {
+        // Full match
+        val updatedQuantity = existingOrder.quantity.subtract(remainingQuantity)
+        limitOrders[limitOrders.indexOf(existingOrder)] = existingOrder.copy(quantity = updatedQuantity)
+        return BigDecimal.ZERO
+      }
     }
 
     return remainingQuantity
