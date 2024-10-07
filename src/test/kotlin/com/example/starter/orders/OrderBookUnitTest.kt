@@ -262,4 +262,46 @@ class OrderBookUnitTest {
     assertEquals(BigDecimal("1"), orderBook.buyOrders[BigDecimal("100")]?.first()?.quantity)
     assertTrue(orderBook.sellOrders.isEmpty())
   }
+
+  @Test
+  fun `Ensure Price improvement when a BUY limit order is added when the SELL price is lower`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("98"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+    val res3 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("7"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertTrue(res3)
+
+    assertTrue(orderBook.sellOrders.containsKey(BigDecimal("99")))
+    assertEquals(BigDecimal("3"), orderBook.sellOrders[BigDecimal("99")]?.first()?.quantity)
+    assertTrue(orderBook.buyOrders.isEmpty())
+
+    // Verify that the buy order was filled at better prices
+    assertEquals(1, orderBook.sellOrders.size)
+    assertEquals(1, orderBook.sellOrders[BigDecimal("99")]?.size)
+  }
+
+  @Test
+  fun `Ensure Price improvement when a SELL limit order is added when the BUY price is higher`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("98"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+    val res3 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("95"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertTrue(res3)
+
+    assertTrue(orderBook.buyOrders.containsKey(BigDecimal("98")))
+    assertEquals(BigDecimal("3"), orderBook.buyOrders[BigDecimal("98")]?.first()?.quantity)
+    assertTrue(orderBook.sellOrders.isEmpty())
+
+    // Verify that the sell order was filled at better prices
+    assertEquals(1, orderBook.buyOrders.size)
+    assertEquals(1, orderBook.buyOrders[BigDecimal("98")]?.size)
+  }
 }
