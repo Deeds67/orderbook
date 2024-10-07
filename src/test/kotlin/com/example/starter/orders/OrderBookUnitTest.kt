@@ -24,4 +24,17 @@ class OrderBookUnitTest {
     // Then
     assertTrue(result)
   }
+
+  @Test
+  fun `Submitting a limit order to wrong order book should reject it`() {
+    // Given
+    val invalidCurrencyPair = "ETHUSD"
+    val limitOrder = LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), invalidCurrencyPair)
+
+    // When
+    val result = orderBook.submitLimitOrder(limitOrder)
+
+    // Then
+    assertFalse(result)
+  }
 }

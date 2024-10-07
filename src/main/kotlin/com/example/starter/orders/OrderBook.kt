@@ -23,6 +23,9 @@ class OrderBookImpl(
   private val currencyPair: String,
 ): OrderBook {
   override fun submitLimitOrder(limitOrder: LimitOrder): Boolean {
+    if (limitOrder.pair != currencyPair)
+        return false
+    
     return true
   }
 
