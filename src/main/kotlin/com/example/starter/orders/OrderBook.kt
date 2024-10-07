@@ -1,5 +1,6 @@
 package com.example.starter.orders
 
+import com.example.starter.trades.TradeRecorder
 import java.math.BigDecimal
 import java.util.*
 
@@ -35,6 +36,7 @@ interface OrderBook {
 
 class OrderBookImpl(
   val currencyPair: String,
+  private val tradeRecorder: TradeRecorder
 ): OrderBook {
 
   internal val buyOrders = TreeMap<BigDecimal, ArrayList<LimitOrder>>(compareByDescending { it })
@@ -82,10 +84,7 @@ class OrderBookImpl(
     }
 
     if (remainingQuantity > BigDecimal.ZERO) {
-      buyOrders.merge(limitOrder.price, arrayListOf(limitOrder.copy(quantity = remainingQuantity))) { prev, order ->
-        prev.addAll(order)
-        prev
-      }
+      addOrderToBook(buyOrders, limitOrder.copy(quantity = remainingQuantity))
     }
   }
 
@@ -104,11 +103,12 @@ class OrderBookImpl(
     }
 
     if (remainingQuantity > BigDecimal.ZERO) {
-      sellOrders.merge(limitOrder.price, arrayListOf(limitOrder.copy(quantity = remainingQuantity))) { prev, order ->
-        prev.addAll(order)
-        prev
-      }
+      addOrderToBook(sellOrders, limitOrder.copy(quantity = remainingQuantity))
     }
+  }
+
+  private fun addOrderToBook(orders: TreeMap<BigDecimal, ArrayList<LimitOrder>>, limitOrder: LimitOrder) {
+    orders.getOrPut(limitOrder.price) { ArrayList() }.add(limitOrder)
   }
 
   private fun matchOrders(limitOrders: ArrayList<LimitOrder>, quantity: BigDecimal, orderSide: OrderSide): BigDecimal {
@@ -117,6 +117,16 @@ class OrderBookImpl(
 
     while (iterator.hasNext() && remainingQuantity > BigDecimal.ZERO) {
       val existingOrder = iterator.next()
+      val matchedQuantity = minOf(existingOrder.quantity, remainingQuantity)
+      val matchPrice = existingOrder.price
+
+      tradeRecorder.recordTrade(
+        price = matchPrice,
+        quantity = matchedQuantity,
+        pair = currencyPair,
+        takerSide = orderSide,
+        quoteVolume = matchPrice.multiply(matchedQuantity)
+      )
 
       if (existingOrder.quantity <= remainingQuantity) {
         remainingQuantity = remainingQuantity.subtract(existingOrder.quantity)

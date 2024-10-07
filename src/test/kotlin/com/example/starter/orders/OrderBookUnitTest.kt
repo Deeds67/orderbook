@@ -1,5 +1,8 @@
 package com.example.starter.orders
 
+import com.example.starter.trades.TradeRecorder
+import com.example.starter.trades.TradeRecorderImpl
+import io.mockk.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -7,10 +10,13 @@ import java.math.BigDecimal
 
 class OrderBookUnitTest {
   private lateinit var orderBook: OrderBookImpl
+  private lateinit var tradeRecorder: TradeRecorder
 
   @BeforeEach
   fun setUp() {
-    orderBook = OrderBookImpl("BTCUSD")
+    tradeRecorder = mockk<TradeRecorder>()
+    coEvery { tradeRecorder.recordTrade(any(), any(), any(), any(), any()) } returns 0L
+    orderBook = OrderBookImpl("BTCUSD", tradeRecorder)
   }
 
   @Test
@@ -349,5 +355,53 @@ class OrderBookUnitTest {
       listOf(PriceSummary(BigDecimal("100"), BigDecimal("14"), 2),
         PriceSummary(BigDecimal("105"), BigDecimal("7"), 1)),
       ), summary)
+  }
+
+  @Test
+  fun `Submitting a limit order that doesn't get filled does not record a trade`() {
+    // Given
+    val limitOrder = LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), "BTCUSD")
+
+    // When
+    val result = orderBook.submitLimitOrder(limitOrder)
+
+    // Then
+    coVerify(exactly = 0) { tradeRecorder.recordTrade(any(), any(), any(), any(), any()) }
+    assertTrue(result)
+  }
+
+  @Test
+  fun `Submitting an order that trigger multiple fills records one trade per fill`() {
+    // Given
+    tradeRecorder = TradeRecorderImpl("BTCUSD")
+    orderBook = OrderBookImpl("BTCUSD", tradeRecorder)
+
+    // When
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("3"), BigDecimal("100"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("2"), BigDecimal("100"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    val trades = tradeRecorder.getRecentTrades(10)
+
+    // Then
+    assertEquals(2, trades.size)
+
+    val trade1 = trades[1]
+    val trade2 = trades[0]
+
+    assertEquals(1L, trade1.sequenceId)
+    assertEquals("BTCUSD", trade1.currencyPair)
+    assertEquals(BigDecimal("3"), trade1.quantity)
+    assertEquals(BigDecimal("100"), trade1.price)
+    assertEquals(BigDecimal("300"), trade1.quoteVolume)
+    assertEquals(OrderSide.SELL, trade1.takerSide)
+
+    assertEquals(2L, trade2.sequenceId)
+    assertEquals("BTCUSD", trade2.currencyPair)
+    assertEquals(BigDecimal("2"), trade2.quantity)
+    assertEquals(BigDecimal("100"), trade2.price)
+    assertEquals(BigDecimal("200"), trade2.quoteVolume)
+    assertEquals(OrderSide.SELL, trade2.takerSide)
+
   }
 }

@@ -1,5 +1,6 @@
 package com.example.starter.orders
 
+import com.example.starter.trades.TradeRecorder
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.*
@@ -9,11 +10,13 @@ import java.math.BigDecimal
 
 class OrderProcessorUnitTest {
   private lateinit var orderBook: OrderBook
+  private lateinit var tradeRecorder: TradeRecorder
   private lateinit var orderService: OrderService
 
   @BeforeEach
   fun setUp() {
-    orderBook = OrderBookImpl("BTCUSD")
+    tradeRecorder = mockk<TradeRecorder>()
+    orderBook = OrderBookImpl("BTCUSD", tradeRecorder)
 
     orderService = OrderServiceImpl(mapOf("BTCUSD" to orderBook))
   }
