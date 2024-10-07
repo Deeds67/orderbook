@@ -65,4 +65,33 @@ class OrderBookUnitTest {
     assertEquals(arrayListOf<LimitOrder>(), orderBook.getBuyOrders())
     assertEquals(listOf(limitOrder), orderBook.getSellOrders())
   }
+
+  @Test
+  fun `Submitting a BUY order to an order book that contains other buy orders at different prices`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(2, orderBook.buyOrders.size)
+    assertEquals(BigDecimal("10"), orderBook.buyOrders[BigDecimal("100")]?.first()?.quantity)
+    assertEquals(BigDecimal("5"), orderBook.buyOrders[BigDecimal("99")]?.first()?.quantity)
+  }
+
+  @Test
+  fun `Submitting a BUY order to an order book that contains other sell orders at different prices`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("10"), BigDecimal("101"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(1, orderBook.sellOrders.size)
+    assertEquals(1, orderBook.buyOrders.size)
+    assertEquals(BigDecimal("10"), orderBook.sellOrders[BigDecimal("101")]?.first()?.quantity)
+    assertEquals(BigDecimal("5"), orderBook.buyOrders[BigDecimal("99")]?.first()?.quantity)
+  }
 }
