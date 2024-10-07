@@ -141,7 +141,7 @@ class OrderBookUnitTest {
   }
 
   @Test
-  fun `Submitting a SELL order that will fully match on multiple SELL orders`() {
+  fun `Submitting a BUY order that will fully match on multiple SELL orders`() {
     // When
     val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("3"), BigDecimal("100"), "BTCUSD"))
     val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("2"), BigDecimal("100"), "BTCUSD"))
@@ -181,6 +181,62 @@ class OrderBookUnitTest {
     assertTrue(res3)
     assertEquals(0, orderBook.sellOrders.size)
     assertEquals(BigDecimal("1"), orderBook.buyOrders[BigDecimal("100")]?.first()?.quantity)
+  }
+
+  @Test
+  fun `Submitting a SELL order that will fully match on a single BUY order`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(1, orderBook.buyOrders.size)
+    assertEquals(BigDecimal("5"), orderBook.buyOrders[BigDecimal("100")]?.first()?.quantity)
+  }
+
+  @Test
+  fun `Submitting a SELL order that will fully match on multiple BUY orders`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("3"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("2"), BigDecimal("100"), "BTCUSD"))
+    val res3 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertTrue(res3)
+    assertEquals(0, orderBook.buyOrders.size)
+    assertEquals(0, orderBook.sellOrders.size)
+  }
+
+  @Test
+  fun `Submitting a SELL order that will partially match a single BUY order`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("3"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(0, orderBook.buyOrders.size)
+    assertEquals(BigDecimal("2"), orderBook.sellOrders[BigDecimal("100")]?.first()?.quantity)
+  }
+
+  @Test
+  fun `Submitting a SELL order that will partially match multiple BUY orders`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("3"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("1"), BigDecimal("100"), "BTCUSD"))
+    val res3 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertTrue(res3)
+    assertEquals(0, orderBook.buyOrders.size)
+    assertEquals(BigDecimal("1"), orderBook.sellOrders[BigDecimal("100")]?.first()?.quantity)
   }
 
 

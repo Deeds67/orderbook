@@ -66,9 +66,24 @@ class OrderBookImpl(
   }
 
   private fun processSellOrder(limitOrder: LimitOrder) {
-    sellOrders.merge(limitOrder.price, arrayListOf(limitOrder)) { prev, order ->
-      prev.addAll(order)
-      prev
+    var remainingQuantity = limitOrder.quantity
+
+    while (remainingQuantity > BigDecimal.ZERO && buyOrders.isNotEmpty()) {
+      val highestBuyPrice = buyOrders.firstKey()
+      if (highestBuyPrice < limitOrder.price) break
+
+      val buyOrdersAtPrice = buyOrders[highestBuyPrice] ?: continue
+      remainingQuantity = matchOrders(buyOrdersAtPrice, remainingQuantity, OrderSide.SELL)
+      if (buyOrdersAtPrice.isEmpty()) {
+        buyOrders.remove(highestBuyPrice)
+      }
+    }
+
+    if (remainingQuantity > BigDecimal.ZERO) {
+      sellOrders.merge(limitOrder.price, arrayListOf(limitOrder.copy(quantity = remainingQuantity))) { prev, order ->
+        prev.addAll(order)
+        prev
+      }
     }
   }
 
