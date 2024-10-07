@@ -32,19 +32,59 @@ class OrderBookImpl(
     if (limitOrder.pair != currencyPair)
         return false
 
-    if (limitOrder.side == OrderSide.BUY)
-      buyOrders.merge(limitOrder.price, arrayListOf(limitOrder)) { prev, order ->
-        prev.addAll(order)
-        prev
-      } else {
-      sellOrders.merge(limitOrder.price, arrayListOf(limitOrder)) { prev, order ->
+    processLimitOrder(limitOrder)
+    return true
+  }
+
+  private fun processLimitOrder(limitOrder: LimitOrder) {
+    when (limitOrder.side) {
+      OrderSide.BUY -> processBuyOrder(limitOrder)
+      OrderSide.SELL -> processSellOrder(limitOrder)
+    }
+  }
+
+  private fun processBuyOrder(limitOrder: LimitOrder) {
+    var remainingQuantity = limitOrder.quantity
+
+    while (remainingQuantity > BigDecimal.ZERO && sellOrders.isNotEmpty()) {
+      val lowestSellPrice = sellOrders.firstKey()
+      if (lowestSellPrice > limitOrder.price) break
+
+      val sellOrdersAtPrice = sellOrders[lowestSellPrice] ?: continue
+      remainingQuantity = matchOrders(sellOrdersAtPrice, remainingQuantity, OrderSide.BUY)
+      if (sellOrdersAtPrice.isEmpty()) {
+        sellOrders.remove(lowestSellPrice)
+      }
+    }
+
+    if (remainingQuantity > BigDecimal.ZERO) {
+      buyOrders.merge(limitOrder.price, arrayListOf(limitOrder.copy(quantity = remainingQuantity))) { prev, order ->
         prev.addAll(order)
         prev
       }
     }
+  }
 
+  private fun processSellOrder(limitOrder: LimitOrder) {
+    sellOrders.merge(limitOrder.price, arrayListOf(limitOrder)) { prev, order ->
+      prev.addAll(order)
+      prev
+    }
+  }
 
-    return true
+  private fun matchOrders(limitOrders: ArrayList<LimitOrder>, quantity: BigDecimal, orderSide: OrderSide): BigDecimal {
+    var remainingQuantity = quantity
+    val iterator = limitOrders.iterator()
+
+    while (iterator.hasNext() && remainingQuantity > BigDecimal.ZERO) {
+      val existingOrder = iterator.next()
+
+      val updatedQuantity = existingOrder.quantity.subtract(remainingQuantity)
+      limitOrders[limitOrders.indexOf(existingOrder)] = existingOrder.copy(quantity = updatedQuantity)
+      return BigDecimal.ZERO
+    }
+
+    return remainingQuantity
   }
 
   override fun getBuyOrders(): List<LimitOrder> {

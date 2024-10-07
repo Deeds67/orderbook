@@ -127,5 +127,18 @@ class OrderBookUnitTest {
     assertEquals(arrayListOf<LimitOrder>(), orderBook.buyOrders.values.flatten())
   }
 
+  @Test
+  fun `Submitting a BUY order that will fully match`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("10"), BigDecimal("100"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("100"), "BTCUSD"))
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(1, orderBook.sellOrders.size)
+    assertEquals(BigDecimal("5"), orderBook.sellOrders[BigDecimal("100")]?.first()?.quantity)
+  }
+
 
 }
