@@ -17,8 +17,6 @@ data class LimitOrder(
 
 interface OrderBook {
   fun submitLimitOrder(limitOrder: LimitOrder): Boolean
-  fun getBuyOrders(): List<LimitOrder>
-  fun getSellOrders(): List<LimitOrder>
 }
 
 class OrderBookImpl(
@@ -106,13 +104,4 @@ class OrderBookImpl(
 
     return remainingQuantity
   }
-
-  override fun getBuyOrders(): List<LimitOrder> {
-    return buyOrders.values.flatten().toList()
-  }
-
-  override fun getSellOrders(): List<LimitOrder> {
-    return sellOrders.values.flatten().toList()
-  }
-
 }

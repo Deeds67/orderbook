@@ -48,8 +48,8 @@ class OrderBookUnitTest {
 
     // Then
     assertTrue(result)
-    assertEquals(listOf(limitOrder), orderBook.getBuyOrders())
-    assertEquals(arrayListOf<LimitOrder>(), orderBook.getSellOrders())
+    assertEquals(listOf(limitOrder), orderBook.buyOrders[BigDecimal("100")])
+    assertEquals(0, orderBook.sellOrders.size)
   }
 
   @Test
@@ -62,8 +62,8 @@ class OrderBookUnitTest {
 
     // Then
     assertTrue(result)
-    assertEquals(arrayListOf<LimitOrder>(), orderBook.getBuyOrders())
-    assertEquals(listOf(limitOrder), orderBook.getSellOrders())
+    assertEquals(listOf(limitOrder), orderBook.sellOrders[BigDecimal("100")])
+    assertEquals(0, orderBook.buyOrders.size)
   }
 
   @Test
