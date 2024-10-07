@@ -13,7 +13,7 @@ class OrderServiceImpl(
   private val orderBooks: Map<String, OrderBook>,
   private val coroutineScope: CoroutineScope
 ): OrderService {
-  val channels = orderBooks.keys.associateWith {
+  private val channels = orderBooks.keys.associateWith {
     Channel<LimitOrder>(Channel.UNLIMITED)
   }
 
