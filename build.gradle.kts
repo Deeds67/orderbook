@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin ("jvm") version "1.7.21"
+  kotlin ("jvm") version "1.9.0"
   application
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
@@ -17,6 +17,7 @@ repositories {
 
 val vertxVersion = "4.5.10"
 val junitJupiterVersion = "5.9.1"
+val mockkVersion = "1.13.12"
 
 val mainVerticleName = "com.example.starter.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
@@ -36,6 +37,8 @@ dependencies {
   implementation("io.vertx:vertx-web")
   implementation("io.vertx:vertx-lang-kotlin-coroutines")
   implementation("io.vertx:vertx-lang-kotlin")
+  testImplementation("io.mockk:mockk:${mockkVersion}")
+
   implementation(kotlin("stdlib-jdk8"))
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
