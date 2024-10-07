@@ -59,7 +59,7 @@ class OrderProcessorUnitTest {
   }
 
   @Test
-  fun `Getting an order summary for an order book with orders should return the summary`() {
+  fun `Getting an orderbook summary for an order book with orders should return the summary`() {
     // Given
     orderBook = mockk<OrderBook>()
     coEvery { orderBook.getOrderBookSummary() } returns OrderBookSummary("BTCUSD",
@@ -78,7 +78,7 @@ class OrderProcessorUnitTest {
   }
 
   @Test
-  fun `Getting an order summary for an a non existing order book returns null`() {
+  fun `Getting an orderbook summary for an a non existing order book returns null`() {
     // When
     val res = orderService.getOrderBookSummary("INVALID")
 
