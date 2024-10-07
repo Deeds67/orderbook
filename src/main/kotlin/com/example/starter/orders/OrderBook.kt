@@ -15,12 +15,26 @@ data class LimitOrder(
   val orderId: String = UUID.randomUUID().toString(),
 )
 
+data class OrderBookSummary(
+  val currencyPair: String,
+  val bids: List<PriceSummary>,
+  val asks: List<PriceSummary>
+)
+
+data class PriceSummary(
+  val price: BigDecimal,
+  val quantity: BigDecimal,
+  val orderCount: Int
+)
+
+
 interface OrderBook {
   fun submitLimitOrder(limitOrder: LimitOrder): Boolean
+  fun getOrderBookSummary(): OrderBookSummary
 }
 
 class OrderBookImpl(
-  private val currencyPair: String,
+  val currencyPair: String,
 ): OrderBook {
 
   internal val buyOrders = TreeMap<BigDecimal, ArrayList<LimitOrder>>(compareByDescending { it })
@@ -32,6 +46,18 @@ class OrderBookImpl(
 
     processLimitOrder(limitOrder)
     return true
+  }
+
+  override fun getOrderBookSummary(): OrderBookSummary {
+    val bids = buyOrders.entries.map { (price, orders) ->
+      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
+    }
+
+    val asks = sellOrders.entries.map { (price, orders) ->
+      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
+    }
+
+    return OrderBookSummary(currencyPair, bids, asks)
   }
 
   private fun processLimitOrder(limitOrder: LimitOrder) {

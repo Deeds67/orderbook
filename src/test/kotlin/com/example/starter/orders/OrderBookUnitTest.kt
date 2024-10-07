@@ -304,4 +304,50 @@ class OrderBookUnitTest {
     assertEquals(1, orderBook.buyOrders.size)
     assertEquals(1, orderBook.buyOrders[BigDecimal("98")]?.size)
   }
+
+  @Test
+  fun `Getting an order book summary for an empty order book returns an empty summary`() {
+    // When
+    val emptySummary = orderBook.getOrderBookSummary()
+
+    // Then
+    assertEquals(OrderBookSummary(orderBook.currencyPair, listOf(), listOf()), emptySummary)
+  }
+
+  @Test
+  fun `Getting an order book summary for an order book with only one ask and sell`() {
+    // When
+    val res1 = orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+    val res2 = orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("100"), "BTCUSD"))
+    val summary = orderBook.getOrderBookSummary()
+
+    // Then
+    assertTrue(res1)
+    assertTrue(res2)
+    assertEquals(OrderBookSummary(orderBook.currencyPair,
+      listOf(PriceSummary(BigDecimal("99"), BigDecimal("5"), 1)),
+      listOf(PriceSummary(BigDecimal("100"), BigDecimal("7"), 1))), summary)
+  }
+
+  @Test
+  fun `Getting an order book summary for an order book with multiple one asks and sells at the same price`() {
+    // When
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("95"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.BUY, BigDecimal("5"), BigDecimal("99"), "BTCUSD"))
+
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("100"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("100"), "BTCUSD"))
+    orderBook.submitLimitOrder(LimitOrder(OrderSide.SELL, BigDecimal("7"), BigDecimal("105"), "BTCUSD"))
+
+    val summary = orderBook.getOrderBookSummary()
+
+    // Then
+    assertEquals(OrderBookSummary(orderBook.currencyPair,
+      listOf(PriceSummary(BigDecimal("99"), BigDecimal("10"), 2),
+        PriceSummary(BigDecimal("95"), BigDecimal("5"), 1)),
+      listOf(PriceSummary(BigDecimal("100"), BigDecimal("14"), 2),
+        PriceSummary(BigDecimal("105"), BigDecimal("7"), 1)),
+      ), summary)
+  }
 }

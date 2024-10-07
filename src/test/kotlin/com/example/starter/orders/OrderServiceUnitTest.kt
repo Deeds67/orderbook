@@ -58,5 +58,33 @@ class OrderProcessorUnitTest {
     assertNull(res)
   }
 
+  @Test
+  fun `Getting an order summary for an order book with orders should return the summary`() {
+    // Given
+    orderBook = mockk<OrderBook>()
+    coEvery { orderBook.getOrderBookSummary() } returns OrderBookSummary("BTCUSD",
+      listOf(PriceSummary(BigDecimal("100"), BigDecimal("1"), 1)),
+      listOf(PriceSummary(BigDecimal("105"), BigDecimal("1"), 1))
+    )
+    orderService = OrderServiceImpl(mapOf("BTCUSD" to orderBook))
+
+    // When
+    val res = orderService.getOrderBookSummary("BTCUSD")
+
+    // Then
+    assertNotNull(res)
+    assertTrue(res!!.asks.isNotEmpty())
+    assertTrue(res.bids.isNotEmpty())
+  }
+
+  @Test
+  fun `Getting an order summary for an a non existing order book returns null`() {
+    // When
+    val res = orderService.getOrderBookSummary("INVALID")
+
+    // Then
+    assertNull(res)
+  }
+
 
 }
