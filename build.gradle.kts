@@ -38,6 +38,7 @@ dependencies {
   implementation("io.vertx:vertx-lang-kotlin-coroutines")
   implementation("io.vertx:vertx-lang-kotlin")
   testImplementation("io.mockk:mockk:${mockkVersion}")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
   implementation(kotlin("stdlib-jdk8"))
   testImplementation("io.vertx:vertx-junit5")
