@@ -14,7 +14,7 @@ class OrderBookUnitTest {
   }
 
   @Test
-  fun `Submitting a valid limit order to an empty order book`() {
+  fun `Submitting a valid limit order to the correct order book`() {
     // Given
     val limitOrder = LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), "BTCUSD")
 
@@ -36,5 +36,33 @@ class OrderBookUnitTest {
 
     // Then
     assertFalse(result)
+  }
+
+  @Test
+  fun `Submitting a valid BUY limit order to an empty order book should add the order`() {
+    // Given
+    val limitOrder = LimitOrder(OrderSide.BUY, BigDecimal("10"), BigDecimal("100"), "BTCUSD")
+
+    // When
+    val result = orderBook.submitLimitOrder(limitOrder)
+
+    // Then
+    assertTrue(result)
+    assertEquals(listOf(limitOrder), orderBook.getBuyOrders())
+    assertEquals(arrayListOf<LimitOrder>(), orderBook.getSellOrders())
+  }
+
+  @Test
+  fun `Submitting a valid SELL limit order to an empty order book should add the order`() {
+    // Given
+    val limitOrder = LimitOrder(OrderSide.SELL, BigDecimal("10"), BigDecimal("100"), "BTCUSD")
+
+    // When
+    val result = orderBook.submitLimitOrder(limitOrder)
+
+    // Then
+    assertTrue(result)
+    assertEquals(arrayListOf<LimitOrder>(), orderBook.getBuyOrders())
+    assertEquals(listOf(limitOrder), orderBook.getSellOrders())
   }
 }
