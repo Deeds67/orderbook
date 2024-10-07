@@ -118,4 +118,64 @@ class TestMainVerticle {
         }
       }
   }
+
+  @Test
+  fun `Get non-existent order book returns 404`(vertx: Vertx, testContext: VertxTestContext) {
+    val client = WebClient.create(vertx)
+
+    client.get(8080, "localhost", "/NONEXISTENT/orderbook")
+      .send { ar ->
+        if (ar.succeeded()) {
+          val response = ar.result()
+          assertEquals(404, response.statusCode())
+          val body = response.bodyAsJsonObject()
+          assertEquals("Order book not found", body.getString("message"))
+          testContext.completeNow()
+        } else {
+          testContext.failNow(ar.cause())
+        }
+      }
+  }
+
+  @Test
+  fun `Submit limit order to non-existent order book returns 400`(vertx: Vertx, testContext: VertxTestContext) {
+    val client = WebClient.create(vertx)
+
+    val limitOrderBody = JsonObject()
+      .put("side", "BUY")
+      .put("quantity", "1.0")
+      .put("price", "50000")
+      .put("pair", "NONEXISTENT")
+
+    client.post(8080, "localhost", "/v1/orders/limit")
+      .sendJsonObject(limitOrderBody) { ar ->
+        if (ar.succeeded()) {
+          val response = ar.result()
+          assertEquals(400, response.statusCode())
+          val body = response.bodyAsJsonObject()
+          assertEquals("Failed to submit limit order", body.getString("message"))
+          testContext.completeNow()
+        } else {
+          testContext.failNow(ar.cause())
+        }
+      }
+  }
+
+  @Test
+  fun `Get trade history for non-existent currency pair returns 404`(vertx: Vertx, testContext: VertxTestContext) {
+    val client = WebClient.create(vertx)
+
+    client.get(8080, "localhost", "/NONEXISTENT/tradehistory")
+      .send { ar ->
+        if (ar.succeeded()) {
+          val response = ar.result()
+          assertEquals(404, response.statusCode())
+          val body = response.bodyAsJsonObject()
+          assertEquals("Trade history not found", body.getString("message"))
+          testContext.completeNow()
+        } else {
+          testContext.failNow(ar.cause())
+        }
+      }
+  }
 }

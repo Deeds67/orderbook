@@ -45,7 +45,7 @@ class MainVerticle : CoroutineVerticle() {
   }
 
   private fun getOrderBookSummary(ctx: RoutingContext, orderService: OrderService) {
-    val currencyPair = ctx.pathParam("currencyPair") ?: throw Exception("CurrencyPair not specified")
+    val currencyPair = ctx.pathParam("currencyPair")
     val summary = orderService.getOrderBookSummary(currencyPair)
 
     if (summary == null) {
@@ -82,14 +82,23 @@ class MainVerticle : CoroutineVerticle() {
 
     val limitOrder = LimitOrder(side, quantity, price, pair)
 
-    val processedOrderId = orderService.submitLimitOrder(limitOrder)
+    try {
+      val processedOrderId = orderService.submitLimitOrder(limitOrder)
 
-    val response = JsonObject()
-      .put("id", processedOrderId)
+      if (processedOrderId == null) {
+        ctx.response().setStatusCode(400).end(JsonObject().put("message", "Failed to submit limit order").encode())
+        return
+      }
 
-    ctx.response()
-      .putHeader("content-type", "application/json")
-      .end(response.encode())
+      val response = JsonObject()
+        .put("id", processedOrderId)
+
+      ctx.response()
+        .putHeader("content-type", "application/json")
+        .end(response.encode())
+    } catch (e: IllegalArgumentException) {
+      ctx.response().setStatusCode(404).end(JsonObject().put("message", "Order book not found").encode())
+    }
   }
 
   private fun getRecentTrades(ctx: RoutingContext, tradeRecorders: Map<String, TradeRecorder>) {
