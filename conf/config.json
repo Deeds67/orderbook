@@ -1,3 +1,4 @@
 {
+  "http.port" : 8080,
   "currencyPairs": ["BTCUSD", "ETHUSD", "XRPUSD"]
 }

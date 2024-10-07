@@ -5,6 +5,8 @@ import com.example.starter.orders.OrderServiceImpl
 import com.example.starter.trades.TradeRecorderImpl
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.http.HttpServer
+import io.vertx.ext.web.Router
+import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.coAwait
 import io.vertx.kotlin.coroutines.dispatcher
@@ -24,5 +26,12 @@ class MainVerticle : CoroutineVerticle() {
     val orderService = OrderServiceImpl(orderBooks, scope)
 
     val server: HttpServer = vertx.createHttpServer()
+
+    val router = Router.router(vertx)
+    router.route().handler(BodyHandler.create())
+
+    val port = config.getInteger("http.port")
+    server.requestHandler(router).listen(port)
+    println("HTTP server started on port $port")
   }
 }
