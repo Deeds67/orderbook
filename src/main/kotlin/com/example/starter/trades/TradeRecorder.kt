@@ -6,6 +6,16 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
+interface TradeRecorder {
+  fun recordTrade(price: BigDecimal,
+                  quantity: BigDecimal,
+                  pair: String,
+                  takerSide: OrderSide,
+                  quoteVolume: BigDecimal): Long?
+
+  fun getRecentTrades(limit: Int): List<Trade>
+}
+
 data class Trade(
   val price: BigDecimal,
   val quantity: BigDecimal,
@@ -16,15 +26,6 @@ data class Trade(
   val id: String = UUID.randomUUID().toString(),
   val quoteVolume: BigDecimal
 )
-interface TradeRecorder {
-  fun recordTrade(price: BigDecimal,
-                  quantity: BigDecimal,
-                  pair: String,
-                  takerSide: OrderSide,
-                  quoteVolume: BigDecimal): Long?
-
-  fun getRecentTrades(limit: Int): List<Trade>
-}
 
 class TradeRecorderImpl(
   private val currencyPair: String,

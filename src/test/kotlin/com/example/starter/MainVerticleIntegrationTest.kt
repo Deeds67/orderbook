@@ -31,7 +31,6 @@ class TestMainVerticle {
     client.post(8080, "localhost", "/v1/orders/limit")
       .sendJsonObject(limitOrderBody) { ar ->
         if (ar.succeeded()) {
-          // Now, get the order book
           client.get(8080, "localhost", "/BTCUSD/orderbook")
             .send { ar2 ->
               if (ar2.succeeded()) {
@@ -66,7 +65,6 @@ class TestMainVerticle {
   fun `Submit two limit orders that will fill and provide a trade history`(vertx: Vertx, testContext: VertxTestContext) {
     val client = WebClient.create(vertx)
 
-    // Submit two matching orders to create a trade
     val buyOrderBody = JsonObject()
       .put("side", "BUY")
       .put("quantity", "1.0")

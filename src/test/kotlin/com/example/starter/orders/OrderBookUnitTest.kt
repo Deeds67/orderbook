@@ -402,6 +402,5 @@ class OrderBookUnitTest {
     assertEquals(BigDecimal("100"), trade2.price)
     assertEquals(BigDecimal("200"), trade2.quoteVolume)
     assertEquals(OrderSide.SELL, trade2.takerSide)
-
   }
 }

@@ -4,6 +4,11 @@ import com.example.starter.trades.TradeRecorder
 import java.math.BigDecimal
 import java.util.*
 
+interface OrderBook {
+  fun submitLimitOrder(limitOrder: LimitOrder): Boolean
+  fun getOrderBookSummary(): OrderBookSummary
+}
+
 enum class OrderSide {
   BUY, SELL
 }
@@ -28,17 +33,10 @@ data class PriceSummary(
   val orderCount: Int
 )
 
-
-interface OrderBook {
-  fun submitLimitOrder(limitOrder: LimitOrder): Boolean
-  fun getOrderBookSummary(): OrderBookSummary
-}
-
 class OrderBookImpl(
   val currencyPair: String,
   private val tradeRecorder: TradeRecorder
 ): OrderBook {
-
   internal val buyOrders = TreeMap<BigDecimal, ArrayList<LimitOrder>>(compareByDescending { it })
   internal val sellOrders = TreeMap<BigDecimal, ArrayList<LimitOrder>>()
 
@@ -49,6 +47,7 @@ class OrderBookImpl(
     processLimitOrder(limitOrder)
     return true
   }
+
   private fun processLimitOrder(limitOrder: LimitOrder) {
     when (limitOrder.side) {
       OrderSide.BUY -> processBuyOrder(limitOrder)
@@ -74,7 +73,6 @@ class OrderBookImpl(
   }
 
   private fun processSellOrder(limitOrder: LimitOrder) {
-
     while (limitOrder.quantity > BigDecimal.ZERO && buyOrders.isNotEmpty()) {
       val highestBuyPrice = buyOrders.firstKey()
       if (highestBuyPrice < limitOrder.price) break

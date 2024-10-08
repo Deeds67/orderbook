@@ -22,7 +22,7 @@ import java.util.UUID
 class OrderProcessorUnitTest {
   private lateinit var orderBook: OrderBook
   private lateinit var tradeRecorder: TradeRecorder
-  private lateinit var orderService: OrderServiceImpl // Change to OrderServiceImpl for access to shutdown
+  private lateinit var orderService: OrderServiceImpl
   private lateinit var coroutineScope: CoroutineScope
 
   @BeforeEach
