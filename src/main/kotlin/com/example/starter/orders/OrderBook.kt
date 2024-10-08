@@ -10,7 +10,7 @@ enum class OrderSide {
 
 data class LimitOrder(
   val side: OrderSide,
-  val quantity: BigDecimal,
+  var quantity: BigDecimal,
   val price: BigDecimal,
   val pair: String,
   val orderId: String = UUID.randomUUID().toString(),
@@ -49,19 +49,6 @@ class OrderBookImpl(
     processLimitOrder(limitOrder)
     return true
   }
-
-  override fun getOrderBookSummary(): OrderBookSummary {
-    val bids = buyOrders.entries.map { (price, orders) ->
-      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
-    }
-
-    val asks = sellOrders.entries.map { (price, orders) ->
-      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
-    }
-
-    return OrderBookSummary(currencyPair, bids, asks)
-  }
-
   private fun processLimitOrder(limitOrder: LimitOrder) {
     when (limitOrder.side) {
       OrderSide.BUY -> processBuyOrder(limitOrder)
@@ -70,40 +57,37 @@ class OrderBookImpl(
   }
 
   private fun processBuyOrder(limitOrder: LimitOrder) {
-    var remainingQuantity = limitOrder.quantity
-
-    while (remainingQuantity > BigDecimal.ZERO && sellOrders.isNotEmpty()) {
+    while (limitOrder.quantity > BigDecimal.ZERO && sellOrders.isNotEmpty()) {
       val lowestSellPrice = sellOrders.firstKey()
       if (lowestSellPrice > limitOrder.price) break
 
       val sellOrdersAtPrice = sellOrders[lowestSellPrice] ?: continue
-      remainingQuantity = matchOrders(sellOrdersAtPrice, remainingQuantity, OrderSide.BUY)
+      limitOrder.quantity = matchOrders(sellOrdersAtPrice, limitOrder.quantity, OrderSide.BUY)
       if (sellOrdersAtPrice.isEmpty()) {
         sellOrders.remove(lowestSellPrice)
       }
     }
 
-    if (remainingQuantity > BigDecimal.ZERO) {
-      addOrderToBook(buyOrders, limitOrder.copy(quantity = remainingQuantity))
+    if (limitOrder.quantity > BigDecimal.ZERO) {
+      addOrderToBook(buyOrders, limitOrder)
     }
   }
 
   private fun processSellOrder(limitOrder: LimitOrder) {
-    var remainingQuantity = limitOrder.quantity
 
-    while (remainingQuantity > BigDecimal.ZERO && buyOrders.isNotEmpty()) {
+    while (limitOrder.quantity > BigDecimal.ZERO && buyOrders.isNotEmpty()) {
       val highestBuyPrice = buyOrders.firstKey()
       if (highestBuyPrice < limitOrder.price) break
 
       val buyOrdersAtPrice = buyOrders[highestBuyPrice] ?: continue
-      remainingQuantity = matchOrders(buyOrdersAtPrice, remainingQuantity, OrderSide.SELL)
+      limitOrder.quantity = matchOrders(buyOrdersAtPrice, limitOrder.quantity, OrderSide.SELL)
       if (buyOrdersAtPrice.isEmpty()) {
         buyOrders.remove(highestBuyPrice)
       }
     }
 
-    if (remainingQuantity > BigDecimal.ZERO) {
-      addOrderToBook(sellOrders, limitOrder.copy(quantity = remainingQuantity))
+    if (limitOrder.quantity > BigDecimal.ZERO) {
+      addOrderToBook(sellOrders, limitOrder)
     }
   }
 
@@ -132,12 +116,23 @@ class OrderBookImpl(
         remainingQuantity = remainingQuantity.subtract(existingOrder.quantity)
         iterator.remove()
       } else {
-        val updatedQuantity = existingOrder.quantity.subtract(remainingQuantity)
-        limitOrders[limitOrders.indexOf(existingOrder)] = existingOrder.copy(quantity = updatedQuantity)
+        existingOrder.quantity = existingOrder.quantity.subtract(remainingQuantity)
         return BigDecimal.ZERO
       }
     }
 
     return remainingQuantity
+  }
+
+  override fun getOrderBookSummary(): OrderBookSummary {
+    val bids = buyOrders.entries.map { (price, orders) ->
+      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
+    }
+
+    val asks = sellOrders.entries.map { (price, orders) ->
+      PriceSummary(price, orders.sumOf { it.quantity }, orders.size)
+    }
+
+    return OrderBookSummary(currencyPair, bids, asks)
   }
 }
